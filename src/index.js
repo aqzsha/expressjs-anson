@@ -1,4 +1,12 @@
 import express from 'express';
+import {
+  query,
+  validationResult,
+  body,
+  checkSchema,
+  matchedData,
+} from 'express-validator';
+import { createUserValidationSchema } from './utils/validationSchemas.js';
 
 const app = express();
 
@@ -41,24 +49,43 @@ app.get('/', (request, response) => {
   response.status(201).send({ msg: 'Hello' });
 });
 
-app.get('/api/users', (request, response) => {
-  console.log(request.query);
-  const {
-    query: { filter, value },
-  } = request;
-  if (filter && value)
-    return response.send(
-      mockUsers.filter((user) => user[filter].includes(value))
-    );
-  return response.send(mockUsers);
-});
+app.get(
+  '/api/users',
+  query('filter')
+    .isString()
+    .notEmpty()
+    .withMessage('Must not be empty')
+    .isLength({ min: 3, max: 10 })
+    .withMessage('Must be at least 3-10 characters'),
+  (request, response) => {
+    const result = validationResult(request);
+    console.log(result);
+    const {
+      query: { filter, value },
+    } = request;
+    if (filter && value)
+      return response.send(
+        mockUsers.filter((user) => user[filter].includes(value))
+      );
+    return response.send(mockUsers);
+  }
+);
 
-app.post('/api/users', (request, response) => {
-  const { body } = request;
-  const newUser = { id: mockUsers[mockUsers.length - 1].id + 1, ...body };
-  mockUsers.push(newUser);
-  return response.status(201).send(newUser);
-});
+app.post(
+  '/api/users',
+  checkSchema(createUserValidationSchema),
+  (request, response) => {
+    const result = validationResult(request);
+    console.log(result);
+
+    if (!result.isEmpty())
+      return response.status(400).send({ errors: result.array() });
+    const data = matchedData(request);
+    const newUser = { id: mockUsers[mockUsers.length - 1].id + 1, ...data };
+    mockUsers.push(newUser);
+    return response.status(201).send(newUser);
+  }
+);
 
 app.get('/api/users/:id', resolveIndexByUserId, (request, response) => {
   const { findUserIndex } = request;
