@@ -9,6 +9,7 @@ import { mockUsers } from '../utils/constants.js';
 import { createUserValidationSchema } from '../utils/validationSchemas.js';
 import { resolveIndexByUserId } from '../utils/middlewares.js';
 import { User } from '../mongoose/schemas/user.js';
+import { hashPassword } from '../utils/helpers.js';
 
 const router = Router();
 
@@ -51,6 +52,7 @@ router.post(
     }
     const data = matchedData(request);
 
+    data.password = hashPassword(data.password);
     const newUser = new User(data);
     try {
       const savedUser = await newUser.save();
