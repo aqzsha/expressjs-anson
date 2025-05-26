@@ -2,11 +2,19 @@ import express from 'express';
 import routes from './routes/index.js';
 import cookieParser from 'cookie-parser';
 import session from 'express-session';
-import { mockUsers } from './utils/constants.js';
+// import { mockUsers } from './utils/constants.js';
 import passport from 'passport';
 import './strategies/local-strategy.js';
+import mongoose from 'mongoose';
+import dotenv from 'dotenv';
+dotenv.config();
 
 const app = express();
+
+mongoose
+  .connect(process.env.MONGODB_URI)
+  .then(() => console.log('Connected to Database'))
+  .catch((err) => console.log(`Error: ${err}`));
 
 app.use(express.json());
 app.use(cookieParser('helloworld'));
